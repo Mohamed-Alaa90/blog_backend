@@ -1,20 +1,22 @@
-const express = require("express");
+require('dotenv').config();
+const express = require('express');
 const app = express();
+const main = require('./server/routes/main');
+const connectDB = require("./server/config/db")
 
-app.use(express.static("public"));
+connectDB();
+app.use(express.static('public'));
 
 //Layouts
-const expressLayout = require("express-ejs-layouts");
+const expressLayout = require('express-ejs-layouts');
 app.use(expressLayout);
-app.set("layout", "layouts/main");
-app.set("view engine", "ejs");
+app.set('layout', './layouts/main');
+app.set('view engine', 'ejs');
 
-app.get("", (res, req) => {
-  res.send("Hello");
-});
-
+app.use('/', main);
 
 const PORT = 5000 || process.env;
 app.listen(PORT, () => {
-  console.info("APP listen In Port", PORT);
+  console.info('APP listen In Port', PORT);
 });
+

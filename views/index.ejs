@@ -1,0 +1,15 @@
+<h1 class="text-center mt-4">Home</h1>
+<p class="text-center">Welcome to the homepage!</p>
+
+<section class="artical">
+  <ul class="artical-ul list-unstyled">
+    <% data.forEach(post => { %>
+    <li>
+      <a href="#">
+        <span><%= post.title %></span>
+      </a>
+      <span><%= post.body %></span>
+    </li>
+    <% }) %>
+  </ul>
+</section>
