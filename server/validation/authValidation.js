@@ -9,6 +9,7 @@ export const registerValidation = (obj) => {
   });
   return schema.validate(obj);
 };
+
 export const loginValidation = (obj) => {
   const schema = Joi.object({
     abortEarly: false,
