@@ -1,27 +1,43 @@
 import mongoose from "mongoose";
 
-const commentSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  text: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
-
 const postSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    content: { type: String },
-    title: { type: String },
-    summary: { type: String },
-    article_type: { type: String },
-    image_url: [{ type: String }],
-    post_type: {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    description: {
       type: String,
       required: true,
-      enum: ["text", "image", "text_with_image"],
+      minlength: 2,
+      maxlength: 200,
     },
-    comments: [commentSchema],
+    title: {
+      type: String,
+      required: true,
+      minlength: 2,
+      maxlength: 200,
+    },
+    category: {
+      type: String,
+      required: true,
+    },
+    image: {
+      type: Object,
+      default: {
+        url: "",
+        publicId: null,
+      },
+    },
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
-  { timestamps: true, minimize: false }
+  { timestamps: true }
 );
 
 const Post = mongoose.model("Post", postSchema);

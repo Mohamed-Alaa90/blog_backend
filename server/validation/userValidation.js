@@ -1,6 +1,5 @@
 import Joi from "joi";
 
-
 export const validateUpdateUser = (obj) => {
     const schema = Joi.object({
         abortEarly: false,
@@ -9,4 +8,4 @@ export const validateUpdateUser = (obj) => {
         bio: Joi.string().trim(),
     });
     return schema.validate(obj);
-}
+};
