@@ -11,11 +11,9 @@ export const createPostValidation = (obj) => {
 
 export const updatePostValidation = (obj) => {
   const schema = Joi.object({
-    user: Joi.string().trim(),
     title: Joi.string().trim().min(3).max(200),
     description: Joi.string().trim().min(10),
     category: Joi.string().trim(),
   });
-  return schema.validate(obj); 
+  return schema.validate(obj);
 };
- 
