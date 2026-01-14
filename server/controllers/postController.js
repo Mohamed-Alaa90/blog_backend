@@ -8,14 +8,17 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import fs from "fs";
 import Post from "../models/Post.js";
-import { createPostValidation } from "../validation/postValidation.js";
+import {
+  createPostValidation,
+  updatePostValidation,
+} from "../validation/postValidation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
  * @description create new post
- * @router /api/posts/ create post
+ * @router /api/posts/
  * @access private (Only user logged in)
  * @method POST
  */
@@ -28,6 +31,11 @@ export const createPost = asyncHandler(async (req, res) => {
     });
 
   const { error } = createPostValidation(req.body);
+  if (error)
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message,
+    });
 
   const imagePath = path.join(__dirname, `../images/${req.file.filename}`);
 
@@ -51,18 +59,112 @@ export const createPost = asyncHandler(async (req, res) => {
   });
   fs.unlinkSync(imagePath);
 });
+
+/**
+ * @description create new post
+ * @router /api/posts/
+ * @access public
+ * @method GET
+ */
 export const getAllPosts = asyncHandler(async (req, res) => {
   const POST_PER_PAGE = 3;
-  const { pageNumber, category } = req.query;
+  const { category } = req.query;
+  const pageNumber = Number(req.query.pageNumber);
   let post;
 
-  if (pageNumber) {
-    post = await Post.find().skip((pageNumber - 1) * POST_PER_PAGE).limit(POST_PER_PAGE)
-  } else if (category) {
-    post = await Post.find({ category });
+  if (category && pageNumber) {
+    post = await Post.find({
+      category,
+    })
+      .skip((pageNumber - 1) * POST_PER_PAGE)
+      .limit(POST_PER_PAGE)
+      .populate("user", ["-password"]);
+  } else if (pageNumber) {
+    post = await Post.find()
+      .skip((pageNumber - 1) * POST_PER_PAGE)
+      .limit(POST_PER_PAGE)
+      .populate("user", ["-password"]);
   } else {
     post = await Post.find()
+      .sort({
+        createdAt: -1,
+      })
+      .populate("user", ["-password"]);
   }
-  res.status(200).json(post)
+  res.status(200).json(post);
+});
 
-})
+/**
+ * @description get Single Post
+ * @router /api/posts/:id
+ * @access public
+ * @method GET
+ */
+export const getSinglePost = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id).populate("user", [
+    "-password",
+  ]);
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: "Post not found",
+    });
+  }
+  res.status(200).json(post);
+});
+
+/**
+ * @description delete Post
+ * @router /api/posts/:id
+ * @access private (only admin or post owner)
+ * @method DELETE
+ */
+
+export const deletePost = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id);
+
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: "Post not found",
+    });
+  }
+
+  if (!req.user.isAdmin && post.user.toString() !== req.user.id) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied, forbidden",
+    });
+  }
+
+  await Post.findByIdAndDelete(req.params.id);
+
+  if (post.image?.publicId) {
+    await cloudinaryRemoveImage(post.image.publicId);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Post deleted successfully",
+  });
+});
+
+/**
+ * @description update Post
+ * @router /api/posts/:id
+ * @access private (only admin or post owner)
+ * @method PUT
+ */
+
+export const updatePost = asyncHandler(async (req, res) => {
+  const { error } = updatePostValidation(req.body);
+
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message.replace(/\"/g, ""),
+    });
+  }
+
+  
+});
