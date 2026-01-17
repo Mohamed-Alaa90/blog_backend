@@ -38,26 +38,28 @@ export const createPost = asyncHandler(async (req, res) => {
     });
 
   const imagePath = path.join(__dirname, `../images/${req.file.filename}`);
+  try {
+    const result = await cloudinaryUploadImage(imagePath);
 
-  const result = await cloudinaryUploadImage(imagePath);
+    const post = await Post.create({
+      title: req.body.title,
+      description: req.body.description,
+      category: req.body.category,
+      user: req.user.id,
+      image: {
+        publicId: result.public_id,
+        url: result.secure_url,
+      },
+    });
 
-  const post = await Post.create({
-    title: req.body.title,
-    description: req.body.description,
-    category: req.body.category,
-    user: req.user.id,
-    image: {
-      publicId: result.public_id,
-      url: result.secure_url,
-    },
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "Post created successfully",
-    post,
-  });
-  fs.unlinkSync(imagePath);
+    res.status(201).json({
+      success: true,
+      message: "Post created successfully",
+      post,
+    });
+  } finally {
+    fs.unlinkSync(imagePath);
+  }
 });
 
 /**
@@ -165,6 +167,35 @@ export const updatePost = asyncHandler(async (req, res) => {
       message: error.details[0].message.replace(/\"/g, ""),
     });
   }
+  const post = await Post.findById(req.params.id);
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: "Post not found",
+    });
+  }
+  if (!req.user.isAdmin && post.user.toString() !== req.user.id) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied, forbidden",
+    });
+  }
 
-  
+  const updatedPost = await Post.findByIdAndUpdate(
+    req.params.id,
+    {
+      $set: {
+        title: req.body.title,
+        description: req.body.description,
+        category: req.body.category,
+      },
+    },
+    { new: true },
+  ).populate("user", ["-password"]);
+
+  res.status(200).json({
+    success: true,
+    message: "Post updated successfully",
+    post: updatedPost,
+  });
 });

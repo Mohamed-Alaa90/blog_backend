@@ -20,5 +20,6 @@ router
   .route("/:id")
   .get(validateObjectId, getSinglePost)
   .delete(validateObjectId, verifyToken, deletePost)
-  .put(validateObjectId, verifyToken, photoUpload.single("image"), updatePost);
+  .put(validateObjectId, verifyToken, updatePost);
+
 export default router;
